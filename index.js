@@ -1,5 +1,6 @@
 const Koa = require('koa');
 const app = new Koa();
+const fs = require('fs')
 
 const loggerAsync = require('./middleware/loggerAsync');
 
@@ -7,25 +8,44 @@ const loggerAsync = require('./middleware/loggerAsync');
 
 app.use(loggerAsync())
 
-app.use(async (ctx, next) => {
-  await next();
-  const rt = ctx.response.get('X-Response-Time');
-  console.log(`${ctx.method} ${ctx.url} - ${rt}`);
-});
+function render(page) {
+  return new Promise( (resolve, reject) => {
+    let viewUrl = `./view/${page}`;
+    fs.readFile(viewUrl, "binary", (err, data) => {
+      if(err) {
+        reject(err)
+      } else {
+        resolve(data)
+      }
+    })
+  })
+}
 
-// x-response-time
-
-app.use(async (ctx, next) => {
-  const start = Date.now();
-  await next();
-  const ms = Date.now() - start;
-  ctx.set('X-Response-Time', `${ms}ms`);
-});
-
-// response
+async function route(url) {
+  let view = '';
+  switch(url) {
+    case "/":
+      view = "index.html"
+      break;
+    case "/index":
+      view = "index.html"
+      break;
+      case "/todo":
+      view = "todo.html"
+      break;
+      case "/404":
+      default:
+      view = "404.html"
+      break;
+  }
+  let html = await render(view);
+  return html;
+}
 
 app.use(async ctx => {
-  ctx.body = 'Hello World';
+  let url = ctx.request.url;
+  let html = await route(url);
+  ctx.body = html;
 });
 
 app.listen(3000, () => {
