@@ -1,7 +1,11 @@
 const Koa = require('koa');
 const app = new Koa();
 
+const loggerAsync = require('./middleware/loggerAsync');
+
 // logger
+
+app.use(loggerAsync())
 
 app.use(async (ctx, next) => {
   await next();
@@ -24,4 +28,6 @@ app.use(async ctx => {
   ctx.body = 'Hello World';
 });
 
-app.listen(3000);
+app.listen(3000, () => {
+  console.log("Your application is starting on 3000, open: ", "http://localhost:3000");
+});
